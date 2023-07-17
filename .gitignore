@@ -1,0 +1,9 @@
+*/README.md
+*/.gitignore
+*/HELP.md
+*/.exercism
+*/tests/
+*/HINTS.md
+*/lcov.info
+lib.exe
+lib.pdb
