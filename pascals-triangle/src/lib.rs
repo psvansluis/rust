@@ -29,11 +29,11 @@ impl PascalsTriangle {
 }
 
 fn next_row(previous_row: &Vec<u32>) -> Vec<u32> {
-    let left = [vec![0u32], previous_row.to_owned()].concat();
-    let right = [previous_row.to_owned(), vec![0u32]].concat();
-    let mut out: Vec<u32> = Vec::new();
-    for i in 0..left.len() {
-        out.push(left[i] + right[i]);
+    let mut out = [vec![0u32], previous_row.to_owned()].concat();
+    let inverse = [previous_row.to_owned(), vec![0u32]].concat();
+
+    for i in 0..out.len() {
+        out[i] += inverse[i];
     }
     out
 }
