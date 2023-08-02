@@ -18,10 +18,10 @@ fn luhn_sum(digits: &[u32]) -> u32 {
 }
 
 fn double_maybe(digit: u32, tail_length: usize) -> u32 {
-    match digit {
-        d if tail_length % 2 < 1 => d,
-        d @ 5.. => (d * 2) - 9,
-        d => d * 2,
+    match (digit, tail_length % 2) {
+        (d, 0) => d,
+        (d @ 5.., _) => (d * 2) - 9,
+        (d, _) => d * 2,
     }
 }
 
