@@ -41,19 +41,8 @@ fn count_unique(dice: Dice) -> u8 {
     unique_sides(dice).len() as u8
 }
 
-fn max_side(dice: Dice) -> u8 {
-    dice.into_iter().max().unwrap()
-}
-
-fn min_side(dice: Dice) -> u8 {
-    dice.into_iter().min().unwrap()
-}
-
 fn count_side(target_side: u8, dice: Dice) -> u8 {
-    dice.into_iter()
-        .filter(|&side| side == target_side)
-        .collect::<Vec<u8>>()
-        .len() as u8
+    dice.into_iter().filter(|&side| side == target_side).count() as u8
 }
 
 fn four_of_a_kind(dice: Dice) -> u8 {
@@ -67,27 +56,26 @@ fn four_of_a_kind(dice: Dice) -> u8 {
 }
 
 fn full_house(dice: Dice) -> u8 {
-    if unique_sides(dice)
+    match unique_sides(dice)
         .into_iter()
         .map(|side| count_side(side, dice))
-        .all(|side_count| side_count == 2 || side_count == 3)
+        .collect::<Vec<u8>>()[..]
     {
-        choice(dice)
-    } else {
-        0
+        [2, 3] | [3, 2] => choice(dice),
+        _ => 0,
     }
 }
 
 fn little_straight(dice: Dice) -> u8 {
-    match (count_unique(dice), max_side(dice)) {
-        (5, 5) => 30,
+    match (count_unique(dice), count_side(6, dice)) {
+        (5, 0) => 30,
         _ => 0,
     }
 }
 
 fn big_straight(dice: Dice) -> u8 {
-    match (count_unique(dice), min_side(dice)) {
-        (5, 2) => 30,
+    match (count_unique(dice), count_side(1, dice)) {
+        (5, 0) => 30,
         _ => 0,
     }
 }
