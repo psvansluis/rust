@@ -1,16 +1,17 @@
 use std::collections::HashSet;
 
 pub fn anagrams_for<'a>(word: &str, possible_anagrams: &[&str]) -> HashSet<&'a str> {
-    println!("{}", to_lowercase_sorted(word));
     unimplemented!(
         "For the '{word}' word find anagrams among the following words: {possible_anagrams:?}"
     );
+    is_anagram(word, comparandum)
 }
 
-fn to_lowercase_sorted(word: &str) -> &str {
-    // let mut str = word.to_string();
-    // str.make_ascii_lowercase();
-    // str.chars().collect::<Vec<char>>().sort_unstable();
-    word.to_string().make_ascii_uppercase();
-    word
+fn is_anagram(word: &str, comparandum: &str) -> bool {
+    if word.eq_ignore_ascii_case(comparandum) {
+        return false;
+    }
+    let a = word.chars().collect().sort();
+    let b = comparandum.chars().collect().sort();
+    return a == b;
 }
