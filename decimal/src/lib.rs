@@ -1,7 +1,6 @@
 use std::{ops::Add, vec};
 
 /// Type implementing arbitrary-precision decimal arithmetic
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Decimal {
     sign: Sign,
     digits: Vec<u8>,
@@ -16,10 +15,16 @@ enum Sign {
 
 impl Decimal {
     pub fn try_from(input: &str) -> Option<Decimal> {
+        let mut digits = Self::get_digits(input)?;
+        let mut offset = Self::get_offset(input)?;
+        while digits.last() == Some(&0) && offset > 0 {
+            digits.pop();
+            offset -= 1;
+        }
         Some(Decimal {
             sign: Self::get_sign(input)?,
-            digits: Self::get_digits(input)?,
-            offset: Self::get_offset(input)?,
+            digits,
+            offset,
         })
     }
 
@@ -51,6 +56,7 @@ fn new() {
     assert!(Decimal::try_from("100.1").is_some_and(|d| d.offset == 1
         && d.sign == Sign::Positive
         && d.digits == vec![1, 0, 0, 1]));
+    assert!(Decimal::try_from("100.0").is_some_and(|d| d.offset == 0 && d.digits == vec![1, 0, 0]));
 }
 
 #[test]
@@ -58,8 +64,8 @@ fn getdigits() {
     assert_eq!(None, Decimal::get_digits("aap"));
     assert_eq!(Some(vec![0, 1, 2, 3]), Decimal::get_digits("+01.23"));
     assert_eq!(
-        Some(vec![1, 2, 6, 7, 8, 9, 0, 0, 0, 1]),
-        Decimal::get_digits("-126.7890001")
+        Some(vec![1, 2, 6, 8, 9, 1]),
+        Decimal::get_digits("-126.891")
     );
 }
 
