@@ -1,99 +1,79 @@
-use std::cmp::Ordering;
-
-use regex::Regex;
+use std::{ops::Add, vec};
 
 /// Type implementing arbitrary-precision decimal arithmetic
-#[derive(Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Decimal {
-    digits: Vec<u8>,
-    digits_after_integer: usize,
     sign: Sign,
+    digits: Vec<u8>,
+    offset: usize,
 }
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Sign {
-    Plus = 1,
-    Minus = 0,
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Sign {
+    Positive,
+    Negative,
 }
 
 impl Decimal {
     pub fn try_from(input: &str) -> Option<Decimal> {
-        // if !(Regex::new(r"^[-+]?\\d+\\.?\\d*$").unwrap().is_match(input)) {
-        //     return None;
-        // }
-        let digits_after_integer: usize = match input.rfind('.') {
-            Some(index) => input.len() - index - 1,
-            None => 0,
-        };
-
-        let sign = if input.starts_with('-') {
-            Sign::Minus
-        } else {
-            Sign::Plus
-        };
-
-        let mut digits: Vec<u8> = Vec::new();
-
-        input.chars().for_each(|c: char| {
-            if let Some(index) = c.to_digit(10) {
-                digits.push(index as u8)
-            }
-        });
-
-        return Some(Self {
-            digits,
-            digits_after_integer,
-            sign,
-        });
+        Some(Decimal {
+            sign: Self::get_sign(input)?,
+            digits: Self::get_digits(input)?,
+            offset: Self::get_offset(input)?,
+        })
     }
 
-    pub fn digits(&self) -> &[u8] {
-        self.digits.as_ref()
-    }
-
-    pub fn digits_after_integer(&self) -> usize {
-        self.digits_after_integer
-    }
-
-    pub fn sign(&self) -> &Sign {
-        &self.sign
-    }
-
-    pub fn whole(&self) -> &[u8] {
-        &self.digits[..(self.digits.len() - self.digits_after_integer())]
-    }
-}
-
-impl PartialEq for Decimal {
-    fn eq(&self, other: &Self) -> bool {
-        self.digits == other.digits
-            && self.digits_after_integer == other.digits_after_integer
-            && self.sign == other.sign
-    }
-}
-
-impl PartialOrd for Decimal {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Decimal {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if &self.sign > &other.sign {
-            return Ordering::Greater;
-        } else if &self.sign < &other.sign() {
-            return Ordering::Less;
-        } else {
-            return Ordering::Equal;
+    fn get_sign(input: &str) -> Option<Sign> {
+        match input.chars().next() {
+            Some('-') => Some(Sign::Negative),
+            Some('+') => Some(Sign::Positive),
+            Some(n) if n.is_ascii_digit() => Some(Sign::Positive),
+            _ => None,
         }
     }
+
+    fn get_digits(input: &str) -> Option<Vec<u8>> {
+        input
+            .replace(&['.', '+', '-'][..], "")
+            .chars()
+            .map(|ch| ch.to_digit(10).map(|d| d as u8))
+            .collect()
+    }
+
+    fn get_offset(input: &str) -> Option<usize> {
+        input.chars().rev().position(|c: char| c == '.')
+    }
 }
 
-pub fn main() {
-    println!("hi");
-    let d: Decimal = Decimal::try_from(&"-10.00001".to_string()).expect("should be valid");
-    println!("{:?}", d.digits());
-    println!("{:?}", d.sign());
-    println!("{:?}", d.digits_after_integer());
-    println!("{:?}", d.whole());
+#[test]
+fn new() {
+    assert!(Decimal::try_from("aap").is_none());
+    assert!(Decimal::try_from("100.1").is_some_and(|d| d.offset == 1
+        && d.sign == Sign::Positive
+        && d.digits == vec![1, 0, 0, 1]));
+}
+
+#[test]
+fn getdigits() {
+    assert_eq!(None, Decimal::get_digits("aap"));
+    assert_eq!(Some(vec![0, 1, 2, 3]), Decimal::get_digits("+01.23"));
+    assert_eq!(
+        Some(vec![1, 2, 6, 7, 8, 9, 0, 0, 0, 1]),
+        Decimal::get_digits("-126.7890001")
+    );
+}
+
+#[test]
+fn getsign() {
+    assert_eq!(None, Decimal::get_sign(""));
+    assert_eq!(None, Decimal::get_sign("aap"));
+    assert_eq!(Some(Sign::Positive), Decimal::get_sign("+3.0"));
+    assert_eq!(Some(Sign::Positive), Decimal::get_sign("4.0"));
+    assert_eq!(Some(Sign::Negative), Decimal::get_sign("-9.3"));
+}
+
+#[test]
+fn getoffset() {
+    assert_eq!(Some(3), Decimal::get_offset("0.123"));
+    assert_eq!(Some(1), Decimal::get_offset("512312.0"));
 }
