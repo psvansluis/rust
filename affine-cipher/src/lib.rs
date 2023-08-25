@@ -15,19 +15,8 @@ pub enum AffineCipherError {
 /// returning a return code, the more common convention in Rust is to return a `Result`.
 pub fn encode(plaintext: &str, a: i32, b: i32) -> Result<String, AffineCipherError> {
     let encrypt = |ch| index_to_char(((a * char_to_index(ch)) + b) % LATIN_ALPHABET_LENGTH);
-    match greatest_common_denominator(a, LATIN_ALPHABET_LENGTH) {
-        1 => Ok(apply_code(plaintext, &encrypt)
-            .into_iter()
-            .enumerate()
-            .flat_map(|(index, ch)| {
-                match (index, index % CHUNK_SIZE) {
-                    (1.., 0) => Some(' '),
-                    _ => None,
-                }
-                .into_iter()
-                .chain(once(ch))
-            })
-            .collect::<String>()),
+    match modular_multiplicative_inverse(a, LATIN_ALPHABET_LENGTH) {
+        Some(_) => Ok(into_chunks(apply_code(plaintext, &encrypt))),
         _ => Err(AffineCipherError::NotCoprime(a)),
     }
 }
@@ -37,14 +26,28 @@ pub fn encode(plaintext: &str, a: i32, b: i32) -> Result<String, AffineCipherErr
 pub fn decode(ciphertext: &str, a: i32, b: i32) -> Result<String, AffineCipherError> {
     let decrypt = |ch| {
         index_to_char(
-            (modular_multiplicative_inverse(a, LATIN_ALPHABET_LENGTH) * (char_to_index(ch) - b))
-                % LATIN_ALPHABET_LENGTH,
+            modular_multiplicative_inverse(a, LATIN_ALPHABET_LENGTH).unwrap()
+                * (char_to_index(ch) - b),
         )
     };
-    match greatest_common_denominator(a, LATIN_ALPHABET_LENGTH) {
-        1 => Ok(String::from_iter(apply_code(ciphertext, &decrypt))),
+    match modular_multiplicative_inverse(a, LATIN_ALPHABET_LENGTH) {
+        Some(_) => Ok(String::from_iter(apply_code(ciphertext, &decrypt))),
         _ => Err(AffineCipherError::NotCoprime(a)),
     }
+}
+
+fn into_chunks(chs: Vec<char>) -> String {
+    chs.into_iter()
+        .enumerate()
+        .flat_map(|(index, ch)| {
+            match (index, index % CHUNK_SIZE) {
+                (1.., 0) => Some(' '),
+                _ => None,
+            }
+            .into_iter()
+            .chain(once(ch))
+        })
+        .collect::<String>()
 }
 
 fn greatest_common_denominator(a: i32, b: i32) -> i32 {
@@ -63,14 +66,27 @@ fn gcd() {
     assert_eq!(1, greatest_common_denominator(4, 7));
 }
 
-fn modular_multiplicative_inverse(a: i32, m: i32) -> i32 {
-    (1..).find(|n| (a * n) % m == 1).unwrap()
+fn modular_multiplicative_inverse(a: i32, m: i32) -> Option<i32> {
+    match greatest_common_denominator(a, m) {
+        1 => (1..).find(|n| (a * n) % m == 1),
+        _ => None,
+    }
 }
 
 #[test]
 fn mmi() {
-    assert_eq!(3, modular_multiplicative_inverse(9, LATIN_ALPHABET_LENGTH));
-    assert_eq!(7, modular_multiplicative_inverse(15, LATIN_ALPHABET_LENGTH));
+    assert_eq!(
+        Some(3),
+        modular_multiplicative_inverse(9, LATIN_ALPHABET_LENGTH)
+    );
+    assert_eq!(
+        Some(7),
+        modular_multiplicative_inverse(15, LATIN_ALPHABET_LENGTH)
+    );
+    assert_eq!(
+        None,
+        modular_multiplicative_inverse(18, LATIN_ALPHABET_LENGTH)
+    );
 }
 
 fn apply_code(message: &str, f: &dyn Fn(char) -> char) -> Vec<char> {
@@ -96,7 +112,10 @@ fn test_char_to_index() {
 }
 
 fn index_to_char(index: i32) -> char {
-    ((index + INDEX_A) as u8) as char
+    match index {
+        0.. => ((index % LATIN_ALPHABET_LENGTH + INDEX_A) as u8) as char,
+        _ => index_to_char(index + LATIN_ALPHABET_LENGTH),
+    }
 }
 
 #[test]
