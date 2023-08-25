@@ -1,4 +1,7 @@
-use std::iter::once;
+use std::{
+    cmp::{max, min},
+    iter::once,
+};
 
 const LATIN_ALPHABET_LENGTH: i32 = 26;
 const INDEX_A: i32 = 'a' as i32;
@@ -24,14 +27,10 @@ pub fn encode(plaintext: &str, a: i32, b: i32) -> Result<String, AffineCipherErr
 /// Decodes the ciphertext using the affine cipher with key (`a`, `b`). Note that, rather than
 /// returning a return code, the more common convention in Rust is to return a `Result`.
 pub fn decode(ciphertext: &str, a: i32, b: i32) -> Result<String, AffineCipherError> {
-    let decrypt = |ch| {
-        index_to_char(
-            modular_multiplicative_inverse(a, LATIN_ALPHABET_LENGTH).unwrap()
-                * (char_to_index(ch) - b),
-        )
-    };
     match modular_multiplicative_inverse(a, LATIN_ALPHABET_LENGTH) {
-        Some(_) => Ok(String::from_iter(apply_code(ciphertext, &decrypt))),
+        Some(mmi) => Ok(String::from_iter(apply_code(ciphertext, &|ch| {
+            index_to_char(mmi * (char_to_index(ch) - b))
+        }))),
         _ => Err(AffineCipherError::NotCoprime(a)),
     }
 }
@@ -51,12 +50,10 @@ fn into_chunks(chs: Vec<char>) -> String {
 }
 
 fn greatest_common_denominator(a: i32, b: i32) -> i32 {
-    let mut pair: [i32; 2] = [a, b];
-    pair.sort();
-    match pair {
-        [0, _] => 0,
-        [a, b] if a == b => a,
-        [a, b] => greatest_common_denominator(a, b - a),
+    match (min(a, b), max(a, b)) {
+        (a, b) if a * b == 0 => 0,
+        (a, b) if a == b => a,
+        (a, b) => greatest_common_denominator(a, b - a),
     }
 }
 
@@ -93,8 +90,8 @@ fn apply_code(message: &str, f: &dyn Fn(char) -> char) -> Vec<char> {
     message
         .chars()
         .filter_map(|ch: char| match ch {
-            'a'..='z' | 'A'..='Z' => Some(f(ch.to_ascii_lowercase())),
-            '0'..='9' => Some(ch),
+            l if l.is_ascii_alphabetic() => Some(f(l.to_ascii_lowercase())),
+            d if d.is_ascii_digit() => Some(d),
             _ => None,
         })
         .collect::<Vec<char>>()
