@@ -5,21 +5,17 @@ pub fn get_diamond(c: char) -> Vec<String> {
         len => chars
             .iter()
             .chain(chars.iter().rev().skip(1))
-            .map(|ch| make_row(len, *ch))
+            .map(|ch| match ch {
+                'A' => " ".repeat(len - 1) + &ch.to_string() + &" ".repeat(len - 1),
+                c => {
+                    let dist_from_a: usize = *c as usize - 'A' as usize;
+                    " ".repeat(len - 1 - dist_from_a)
+                        + &c.to_string()
+                        + &" ".repeat((dist_from_a * 2) - 1)
+                        + &c.to_string()
+                        + &" ".repeat(len - 1 - dist_from_a)
+                }
+            })
             .collect::<Vec<String>>(),
-    }
-}
-
-fn make_row(chars_len: usize, ch: char) -> String {
-    match ch {
-        'A' => " ".repeat(chars_len - 1) + &ch.to_string() + &" ".repeat(chars_len - 1),
-        c => {
-            let dist_from_a: usize = c as usize - 'A' as usize;
-            " ".repeat(chars_len - 1 - dist_from_a)
-                + &c.to_string()
-                + &" ".repeat((dist_from_a * 2) - 1)
-                + &c.to_string()
-                + &" ".repeat(chars_len - 1 - dist_from_a)
-        }
     }
 }
