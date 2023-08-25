@@ -16,12 +16,8 @@ pub enum AffineCipherError {
 pub fn encode(plaintext: &str, a: i32, b: i32) -> Result<String, AffineCipherError> {
     let encrypt = |ch| index_to_char(((a * char_to_index(ch)) + b) % LATIN_ALPHABET_LENGTH);
     match greatest_common_denominator(a, LATIN_ALPHABET_LENGTH) {
-        1 => Ok(to_alphnum_lc(plaintext)
-            .chars()
-            .map(|ch: char| match ch {
-                'a'..='z' => encrypt(ch),
-                _ => ch,
-            })
+        1 => Ok(apply_code(plaintext, &encrypt)
+            .into_iter()
             .enumerate()
             .flat_map(|(index, ch)| {
                 match (index, index % CHUNK_SIZE) {
@@ -39,7 +35,16 @@ pub fn encode(plaintext: &str, a: i32, b: i32) -> Result<String, AffineCipherErr
 /// Decodes the ciphertext using the affine cipher with key (`a`, `b`). Note that, rather than
 /// returning a return code, the more common convention in Rust is to return a `Result`.
 pub fn decode(ciphertext: &str, a: i32, b: i32) -> Result<String, AffineCipherError> {
-    unimplemented!("Decode {ciphertext} with the key ({a}, {b})");
+    let decrypt = |ch| {
+        index_to_char(
+            (modular_multiplicative_inverse(a, LATIN_ALPHABET_LENGTH) * (char_to_index(ch) - b))
+                % LATIN_ALPHABET_LENGTH,
+        )
+    };
+    match greatest_common_denominator(a, LATIN_ALPHABET_LENGTH) {
+        1 => Ok(String::from_iter(apply_code(ciphertext, &decrypt))),
+        _ => Err(AffineCipherError::NotCoprime(a)),
+    }
 }
 
 fn greatest_common_denominator(a: i32, b: i32) -> i32 {
@@ -68,17 +73,16 @@ fn mmi() {
     assert_eq!(7, modular_multiplicative_inverse(15, LATIN_ALPHABET_LENGTH));
 }
 
-fn to_alphnum_lc(message: &str) -> String {
+fn apply_code(message: &str, f: &dyn Fn(char) -> char) -> Vec<char> {
     message
         .to_ascii_lowercase()
         .chars()
-        .filter(char::is_ascii_alphanumeric)
-        .collect::<String>()
-}
-
-#[test]
-fn test_to_alphnum_lc() {
-    assert_eq!("h3llobi4tch".to_owned(), to_alphnum_lc("H3llo, bi4tch!"));
+        .filter_map(|ch: char| match ch {
+            'a'..='z' => Some(f(ch)),
+            '0'..='9' => Some(ch),
+            _ => None,
+        })
+        .collect::<Vec<char>>()
 }
 
 fn char_to_index(ch: char) -> i32 {
