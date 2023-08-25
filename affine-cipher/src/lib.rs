@@ -91,10 +91,9 @@ fn mmi() {
 
 fn apply_code(message: &str, f: &dyn Fn(char) -> char) -> Vec<char> {
     message
-        .to_ascii_lowercase()
         .chars()
         .filter_map(|ch: char| match ch {
-            'a'..='z' => Some(f(ch)),
+            'a'..='z' | 'A'..='Z' => Some(f(ch.to_ascii_lowercase())),
             '0'..='9' => Some(ch),
             _ => None,
         })
