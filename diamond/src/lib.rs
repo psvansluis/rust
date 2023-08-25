@@ -5,16 +5,15 @@ pub fn get_diamond(c: char) -> Vec<String> {
         len => chars
             .iter()
             .chain(chars.iter().rev().skip(1))
-            .map(|ch| match ch {
-                'A' => " ".repeat(len - 1) + &ch.to_string() + &" ".repeat(len - 1),
-                c => {
-                    let dist_from_a: usize = *c as usize - 'A' as usize;
-                    " ".repeat(len - 1 - dist_from_a)
-                        + &c.to_string()
-                        + &" ".repeat((dist_from_a * 2) - 1)
-                        + &c.to_string()
-                        + &" ".repeat(len - 1 - dist_from_a)
+            .map(|ch| {
+                let dist_from_a: usize = *ch as usize - 'A' as usize;
+                let side = || " ".repeat(len - 1 - dist_from_a);
+                let mid = || " ".repeat((dist_from_a * 2) - 1);
+                match ch {
+                    'A' => vec![side(), side()],
+                    _ => vec![side(), mid(), side()],
                 }
+                .join(&ch.to_string())
             })
             .collect::<Vec<String>>(),
     }
