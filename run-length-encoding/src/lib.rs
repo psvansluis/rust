@@ -29,15 +29,29 @@ impl Run {
     fn encode(&self) -> String {
         match self.size {
             0 => "".to_owned(),
-            1 => format!("{}", self.ch),
+            1 => self.ch.to_string(),
             _ => format!("{}{}", self.size, self.ch),
         }
     }
+
     fn decode(&self) -> String {
-        format!("{}", self.ch).repeat(self.size)
+        self.ch.to_string().repeat(self.size)
     }
 }
 
 pub fn decode(source: &str) -> String {
-    unimplemented!("Return the run-length decoding of {source}.");
+    source
+        .chars()
+        .fold(
+            (String::new(), String::new()),
+            |acc: (String, String), ch: char| {
+                if ch.is_numeric() {
+                    return (acc.0 + &ch.to_string(), acc.1);
+                } else {
+                    let size: usize = acc.0.parse().unwrap_or(1);
+                    return (String::new(), acc.1 + &Run { size, ch }.decode());
+                }
+            },
+        )
+        .1
 }
