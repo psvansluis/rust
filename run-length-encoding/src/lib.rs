@@ -44,12 +44,11 @@ pub fn decode(source: &str) -> String {
         .chars()
         .fold(
             (String::new(), String::new()),
-            |acc: (String, String), ch: char| {
-                if ch.is_numeric() {
-                    return (acc.0 + &ch.to_string(), acc.1);
-                } else {
+            |acc: (String, String), ch: char| match ch.is_numeric() {
+                true => (acc.0 + &ch.to_string(), acc.1),
+                false => {
                     let size: usize = acc.0.parse().unwrap_or(1);
-                    return (String::new(), acc.1 + &Run { size, ch }.decode());
+                    (String::new(), acc.1 + &Run { size, ch }.decode())
                 }
             },
         )
