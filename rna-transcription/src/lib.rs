@@ -8,28 +8,30 @@ pub struct Rna(String);
 
 impl Dna {
     pub fn new(dna: &str) -> Result<Dna, usize> {
-        to_rna_or_dna(dna, valid_dna).map(Dna)
+        string_if_all_or_index(dna, valid_dna).map(Dna)
     }
 
     pub fn into_rna(self) -> Rna {
-        Rna(self
-            .0
+        self.0
             .chars()
-            .map(|c| {
-                DNA_TO_RNA
-                    .into_iter()
-                    .find(|(dna, _rna)| dna == &c)
-                    .unwrap()
-                    .1
-            })
-            .collect::<String>())
+            .map(dna_to_rna)
+            .collect::<Option<String>>()
+            .map(Rna)
+            .unwrap()
     }
 }
 
 impl Rna {
     pub fn new(rna: &str) -> Result<Rna, usize> {
-        to_rna_or_dna(rna, valid_rna).map(Rna)
+        string_if_all_or_index(rna, valid_rna).map(Rna)
     }
+}
+
+fn dna_to_rna(c: char) -> Option<char> {
+    DNA_TO_RNA
+        .into_iter()
+        .find(|(dna, _rna)| dna == &c)
+        .map(|t| t.1)
 }
 
 fn valid_dna(c: char) -> bool {
@@ -40,7 +42,7 @@ fn valid_rna(c: char) -> bool {
     DNA_TO_RNA.into_iter().any(|(_dna, rna)| rna == c)
 }
 
-fn to_rna_or_dna<F>(sequence: &str, f: F) -> Result<String, usize>
+fn string_if_all_or_index<F>(sequence: &str, f: F) -> Result<String, usize>
 where
     F: Fn(char) -> bool,
 {
