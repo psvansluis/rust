@@ -1,3 +1,5 @@
+use std::cmp::Ordering::{Equal, Greater, Less};
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Classification {
     Abundant,
@@ -6,10 +8,18 @@ pub enum Classification {
 }
 
 pub fn classify(num: u64) -> Option<Classification> {
-    match (1..=num / 2).filter(|m| num % m == 0).sum::<u64>() {
-        _ if num == 0 => None,
-        equal if equal == num => Some(Classification::Perfect),
-        less if less < num => Some(Classification::Deficient),
-        _more => Some(Classification::Abundant),
+    if num == 0 {
+        return None;
     }
+    Some(
+        match (1..=num / 2)
+            .filter(|m| num % m == 0)
+            .sum::<u64>()
+            .cmp(&num)
+        {
+            Less => Classification::Deficient,
+            Equal => Classification::Perfect,
+            Greater => Classification::Abundant,
+        },
+    )
 }
