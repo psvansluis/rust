@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 fn primitive(n: u16) -> Option<char> {
     match n {
         1 => Some('I'),
@@ -10,38 +12,44 @@ fn primitive(n: u16) -> Option<char> {
         _ => None,
     }
 }
-
 pub struct Roman(u16);
+
+impl Display for Roman {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0 == 0 {
+            return write!(f, "");
+        } else if let Some(p) = primitive(self.0) {
+            return write!(f, "{p}");
+        }
+        let high: u16 = match self.0 {
+            900.. => 1000,
+            400.. => 500,
+            90.. => 100,
+            40.. => 50,
+            9.. => 10,
+            4.. => 5,
+            0.. => 1,
+        };
+
+        let prefix: u16 = match self.0 {
+            900..=1000 | 400..=500 => 100,
+            90..=100 | 40..=50 => 10,
+            9 | 4 => 1,
+            _ => 0,
+        };
+
+        write!(
+            f,
+            "{}{}{}",
+            Self(prefix),
+            Self(high),
+            Self(self.0 + prefix - high)
+        )
+    }
+}
 
 impl Roman {
     pub fn from(n: u16) -> Self {
         Self(n)
-    }
-
-    pub fn to_string(&self) -> String {
-        if self.0 == 0 {
-            return String::new();
-        } else if let Some(p) = primitive(self.0) {
-            return p.to_string();
-        }
-        let prim = |n| primitive(n).unwrap().to_string();
-        let sub = |min: u16| Self::from(self.0 - min).to_string();
-
-        match self.0 {
-            1000.. => prim(1000) + &sub(1000),
-            900.. => prim(100) + &prim(1000) + &sub(900),
-            500.. => prim(500) + &sub(500),
-            400.. => prim(100) + &prim(500) + &sub(400),
-            100.. => prim(100) + &sub(100),
-            90.. => prim(10) + &prim(100) + &sub(90),
-            50.. => prim(50) + &sub(50),
-            40.. => prim(10) + &prim(50) + &sub(40),
-            10.. => prim(10) + &sub(10),
-            9.. => prim(1) + &prim(10) + &sub(9),
-            5.. => prim(5) + &sub(5),
-            4.. => prim(1) + &prim(5) + &sub(4),
-            1.. => prim(1) + &sub(1),
-            _ => unreachable!(),
-        }
     }
 }
