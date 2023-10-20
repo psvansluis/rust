@@ -1,21 +1,13 @@
 pub struct Luhn {
-    code: String,
+    digits: Option<Vec<u32>>,
 }
 
 impl Luhn {
     pub fn is_valid(&self) -> bool {
-        if let Some(digits) = self.digits() {
-            return digits.len() > 1 && Luhn::sum(&digits) % 10 == 0;
+        if let Some(digits) = &self.digits {
+            return digits.len() > 1 && Luhn::sum(digits) % 10 == 0;
         }
         false
-    }
-
-    fn digits(&self) -> Option<Vec<u32>> {
-        self.code
-            .chars()
-            .filter(|ch| !ch.is_whitespace())
-            .map(|ch| ch.to_digit(10))
-            .collect()
     }
 
     fn sum(digits: &[u32]) -> u32 {
@@ -37,7 +29,12 @@ impl Luhn {
 impl<T: ToString> From<T> for Luhn {
     fn from(input: T) -> Self {
         Luhn {
-            code: input.to_string(),
+            digits: input
+                .to_string()
+                .chars()
+                .filter(|ch| !ch.is_whitespace())
+                .map(|ch| ch.to_digit(10))
+                .collect(),
         }
     }
 }
