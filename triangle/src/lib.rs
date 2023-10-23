@@ -1,19 +1,32 @@
-pub struct Triangle;
+pub struct Triangle {
+    n_unique: usize,
+}
 
 impl Triangle {
     pub fn build(sides: [u64; 3]) -> Option<Triangle> {
-        todo!("Construct new Triangle from following sides: {sides:?}. Return None if the sides are invalid.");
+        let mut sortable = sides.to_vec();
+        sortable.sort();
+        match sortable[..] {
+            [0, _, _] => None,
+            [l, m, h] if l + m < h => None,
+            _ => Some(Triangle {
+                n_unique: sides
+                    .into_iter()
+                    .collect::<::std::collections::HashSet<_>>()
+                    .len(),
+            }),
+        }
     }
 
     pub fn is_equilateral(&self) -> bool {
-        todo!("Determine if the Triangle is equilateral.");
+        self.n_unique == 1
     }
 
     pub fn is_scalene(&self) -> bool {
-        todo!("Determine if the Triangle is scalene.");
+        self.n_unique == 3
     }
 
     pub fn is_isosceles(&self) -> bool {
-        todo!("Determine if the Triangle is isosceles.");
+        self.n_unique < 3
     }
 }
