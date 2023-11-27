@@ -1,13 +1,21 @@
 // the PhantomData instances in this file are just to stop compiler complaints
 // about missing generics; feel free to remove them
 
+use std::{fmt::Display, ops::Rem};
+
 /// A Matcher is a single rule of fizzbuzz: given a function on T, should
 /// a word be substituted in? If yes, which word?
-pub struct Matcher<T>(std::marker::PhantomData<T>);
+pub struct Matcher<T> {
+    predicate: fn(T) -> bool,
+    substitute: String,
+}
 
 impl<T> Matcher<T> {
-    pub fn new<F, S>(_matcher: F, _subs: S) -> Matcher<T> {
-        todo!()
+    pub fn new<S: ToString>(predicate: fn(T) -> bool, substitute: S) -> Matcher<T> {
+        Self {
+            predicate,
+            substitute: substitute.to_string(),
+        }
     }
 }
 
@@ -20,28 +28,53 @@ impl<T> Matcher<T> {
 /// here because it's a simpler interface for students to implement.
 ///
 /// Also, it's a good excuse to try out using impl trait.
-pub struct Fizzy<T>(std::marker::PhantomData<T>);
+#[derive(Default)]
+pub struct Fizzy<T> {
+    matchers: Vec<Matcher<T>>,
+}
 
-impl<T> Fizzy<T> {
+impl<T> Fizzy<T>
+where
+    T: Copy + ToString + Display,
+{
     pub fn new() -> Self {
-        todo!()
+        Self {
+            matchers: Vec::new(),
+        }
     }
 
-    // feel free to change the signature to `mut self` if you like
     #[must_use]
-    pub fn add_matcher(self, _matcher: Matcher<T>) -> Self {
-        todo!()
+    pub fn add_matcher(mut self, matcher: Matcher<T>) -> Self {
+        self.matchers.push(matcher);
+        self
     }
 
     /// map this fizzy onto every element of an iterator, returning a new iterator
-    pub fn apply<I>(self, _iter: I) -> impl Iterator<Item = String> {
-        // todo!() doesn't actually work, here; () is not an Iterator
-        // that said, this is probably not the actual implementation you desire
-        Vec::new().into_iter()
+    pub fn apply(self, iter: impl Iterator<Item = T>) -> impl Iterator<Item = String> {
+        iter.map(move |el| {
+            match self
+                .matchers
+                .iter()
+                .filter(|m| (m.predicate)(el))
+                .map(|m| m.substitute.clone())
+                .collect::<String>()
+            {
+                str if !str.is_empty() => str,
+                _ => el.to_string(),
+            }
+        })
     }
 }
 
 /// convenience function: return a Fizzy which applies the standard fizz-buzz rules
-pub fn fizz_buzz<T>() -> Fizzy<T> {
-    todo!()
+pub fn fizz_buzz<T>() -> Fizzy<T>
+where
+    T: Display + Copy + From<u8> + PartialEq + Rem<Output = T>,
+{
+    Fizzy {
+        matchers: vec![
+            Matcher::new(|n: T| n % 3.into() == 0.into(), "fizz"),
+            Matcher::new(|n: T| n % 5.into() == 0.into(), "buzz"),
+        ],
+    }
 }
