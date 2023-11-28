@@ -28,15 +28,12 @@ pub fn answer(command: &str) -> Option<i32> {
     let Some(Operator::Number(acc)) = operators.get(0) else {
         return None;
     };
-    operators[1..].chunks(2).try_fold(*acc, |el, chunk| {
-        let Operator::Operation(op) = chunk[0] else {
-            return None;
-        };
-        let Some(Operator::Number(val)) = chunk.get(1) else {
-            return None;
-        };
-        Some(op(el, *val))
-    })
+    operators[1..]
+        .chunks(2)
+        .try_fold(*acc, |el, chunk| match chunk {
+            [Operator::Operation(op), Operator::Number(val)] => Some(op(el, *val)),
+            _ => None,
+        })
 }
 
 fn body(command: &str) -> Option<&str> {
