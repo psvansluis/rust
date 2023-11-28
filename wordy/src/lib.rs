@@ -22,10 +22,7 @@ impl Operator {
 }
 
 pub fn answer(command: &str) -> Option<i32> {
-    let Some(body) = body(command) else {
-        return None;
-    };
-    let Some(operators) = operators(body) else {
+    let Some(operators) = body(command).and_then(operators) else {
         return None;
     };
     let Some(Operator::Number(acc)) = operators.get(0) else {
