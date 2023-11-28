@@ -25,29 +25,21 @@ pub fn answer(command: &str) -> Option<i32> {
     let Some(body) = body(command) else {
         return None;
     };
-    let Some(operators) = body.split_ascii_whitespace()
-            .filter(|word| *word != "by")
-            .map(Operator::new)
-            .collect::<Option<Vec<Operator>>>() else {
+    let Some(operators) = operators(body) else {
         return None;
     };
-    let Some(Operator::Number(mut acc)) = operators.get(0) else {
+    let Some(Operator::Number(acc)) = operators.get(0) else {
         return None;
     };
-
-    let mut i = 1;
-    while i < operators.len() {
-        let Operator::Operation(op) = operators[i] else {
+    operators[1..].chunks(2).try_fold(*acc, |el, chunk| {
+        let Operator::Operation(op) = chunk[0] else {
             return None;
         };
-        let Some(Operator::Number(val)) = operators.get(i+1) else {
+        let Some(Operator::Number(val)) = chunk.get(1) else {
             return None;
         };
-        acc = op(acc, *val);
-        i += 2;
-    }
-
-    Some(acc)
+        Some(op(el, *val))
+    })
 }
 
 fn body(command: &str) -> Option<&str> {
@@ -55,4 +47,11 @@ fn body(command: &str) -> Option<&str> {
     const SUFFIX: char = '?';
     (command.starts_with(PREFIX) && command.ends_with(SUFFIX))
         .then(|| &command[PREFIX.len()..command.len() - SUFFIX.len_utf8()])
+}
+
+fn operators(body: &str) -> Option<Vec<Operator>> {
+    body.split_ascii_whitespace()
+        .filter(|word| *word != "by")
+        .map(Operator::new)
+        .collect()
 }
