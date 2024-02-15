@@ -1,3 +1,4 @@
+use as_variant::as_variant;
 use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Debug, Clone, Copy)]
@@ -22,28 +23,26 @@ impl Operator {
 }
 
 pub fn answer(command: &str) -> Option<i32> {
-    let Some(operators) = body(command).and_then(operators) else {
-        return None;
-    };
-    let Some(Operator::Number(acc)) = operators.get(0) else {
-        return None;
-    };
+    let operators: Vec<Operator> = get_body(command).and_then(into_operators)?;
+    let init: &i32 = operators
+        .get(0)
+        .and_then(|el| as_variant!(el, Operator::Number))?;
     operators[1..]
         .chunks(2)
-        .try_fold(*acc, |el, chunk| match chunk {
+        .try_fold(*init, |el, chunk| match chunk {
             [Operator::Operation(op), Operator::Number(val)] => Some(op(el, *val)),
             _ => None,
         })
 }
 
-fn body(command: &str) -> Option<&str> {
+fn get_body(command: &str) -> Option<&str> {
     const PREFIX: &str = "What is ";
     const SUFFIX: char = '?';
     (command.starts_with(PREFIX) && command.ends_with(SUFFIX))
         .then(|| &command[PREFIX.len()..command.len() - SUFFIX.len_utf8()])
 }
 
-fn operators(body: &str) -> Option<Vec<Operator>> {
+fn into_operators(body: &str) -> Option<Vec<Operator>> {
     body.split_ascii_whitespace()
         .filter(|word| *word != "by")
         .map(Operator::new)
