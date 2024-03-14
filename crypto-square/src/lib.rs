@@ -3,15 +3,13 @@ use itertools::Itertools;
 pub fn encrypt(input: &str) -> String {
     let normalized = normalize(input);
     let row_size = n_columns(normalized.len());
-
-    return (0..row_size)
-        .map(|i| {
-            normalized
-                .chunks(row_size)
-                .map(|chunk| chunk.get(i).unwrap_or(&' '))
-                .collect::<String>()
-        })
-        .join(" ");
+    let get_column_at_index = |i| {
+        normalized
+            .chunks(row_size)
+            .map(|chunk| chunk.get(i).unwrap_or(&' '))
+            .collect::<String>()
+    };
+    (0..row_size).map(get_column_at_index).join(" ")
 }
 
 fn normalize(input: &str) -> Vec<char> {
