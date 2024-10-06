@@ -1,0 +1,10 @@
+[package]
+edition = "2021"
+name = "wordy"
+version = "1.5.0"
+
+[features]
+exponentials = []
+
+[dependencies]
+as_variant = "1.0.1"
