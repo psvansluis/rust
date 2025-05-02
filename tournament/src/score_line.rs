@@ -12,7 +12,7 @@ pub struct ScoreLine {
 impl ScoreLine {
     pub fn new_empty(team: String) -> Self {
         Self {
-            team: team,
+            team,
             wins: 0,
             losses: 0,
             draws: 0,

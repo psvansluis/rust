@@ -1,3 +1,4 @@
+mod game;
 mod outcome;
 mod score_line;
 
