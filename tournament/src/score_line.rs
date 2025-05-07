@@ -1,6 +1,4 @@
-use std::fmt;
-
-use crate::outcome::Outcome;
+use crate::game::Outcome;
 
 pub struct ScoreLine {
     wins: u32,
@@ -17,7 +15,7 @@ impl ScoreLine {
         }
     }
 
-    pub fn add_outcome(&mut self, outcome: &Outcome) -> () {
+    pub fn add_outcome(&mut self, outcome: &Outcome) {
         match outcome {
             Outcome::Win => self.wins += 1,
             Outcome::Draw => self.draws += 1,

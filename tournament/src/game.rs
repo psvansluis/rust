@@ -1,8 +1,5 @@
 use std::str::FromStr;
 
-use crate::{outcome::Outcome, parse_error::ParseError};
-
-#[derive(Debug)]
 pub struct Game {
     pub home: String,
     pub away: String,
@@ -31,5 +28,40 @@ impl FromStr for Game {
             away,
             outcome,
         })
+    }
+}
+
+pub enum Outcome {
+    Win,
+    Draw,
+    Loss,
+}
+
+impl Outcome {
+    pub fn reverse(&self) -> Outcome {
+        match self {
+            Outcome::Win => Self::Loss,
+            Outcome::Draw => Self::Draw,
+            Outcome::Loss => Self::Win,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ParseError {
+    UnparseableOutcome,
+    InsufficientFields,
+}
+
+impl FromStr for Outcome {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "win" => Ok(Self::Win),
+            "draw" => Ok(Self::Draw),
+            "loss" => Ok(Self::Loss),
+            _ => Err(ParseError::UnparseableOutcome),
+        }
     }
 }
