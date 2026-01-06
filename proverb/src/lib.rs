@@ -4,11 +4,8 @@ pub fn build_proverb(items: &[&str]) -> String {
         [] => out,
         [head, tail @ ..] => {
             for i in 0..tail.len() {
-                out += &format!(
-                    "For want of a {} the {} was lost.\n",
-                    items[i],
-                    items[i + 1]
-                );
+                let [first, second] = items[i..i + 2] else {panic!()};
+                out += &format!("For want of a {} the {} was lost.\n", first, second);
             }
             out + &format!("And all for the want of a {head}.")
         }
